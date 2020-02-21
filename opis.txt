@@ -1,0 +1,256 @@
+Główny cel gry:
+
+    Celem gry jest pokonanie wszystkich potworów na planszy oraz dotarcie do drzwi.
+    Podczas naszej podróży możemy spotkać potwory, które będą próbować nas zranić,
+    lub też ukraść nam wszystkie przedmioty (na szczęście tylko te z plecaka), 
+    które możemy zebrać podczas gry.
+    
+Sterowanie:
+
+    WASD   - poruwszanie się
+    ARROWS - atak w określonym kierunku
+    e      - podnieś przedmiot do ekwiunku
+    u      - użyj/załóż przedmiot w ekwipunku
+    0      - zdejmij przedmiot z ekwipunku
+    p      - upuść przedmiot z ekwipunku
+    [      - przesuń wskaźnik ekwipunku w lewo
+    ]      - przesuń wskaźnik ekwipunku w prawo
+    -      - przesuń wskaźnik noszonych przedmiotów w lewo
+    +      - przesuń wskaźnik noszonych przedmiotów w prawo
+    
+
+Klasa Labirynth:
+
+    Zawiera ona cały szkielet gry, zawiera również sobie najważniejsze informacje 
+    takie jak czas gry, informacje o stworach, przedmiotach, ekwipunku oraz założonych przedmiotach,
+    dodatkowo trzyma w sobie komentarze oraz informacje o zajętych polach,
+    
+    Metody tej klasy to:
+        1. rand_pos():
+            losuje pole zawieracjące się w planszy (pustym polu lub też ze ścieżką)
+            
+        2. gen_mobs():
+            zwraca listę potworów (obiekty klasy Mobs),
+            potwory znajduję się na ścieżce od pozycji startowej bohatera do mety.
+            potowry są ustawione w kolejności rosnącej (jeżeli chodzi o ich siłę)
+        
+        3. gen_human():
+            genereje głównego bohatera w miejscu (0, 0)
+        
+        4. gen_items():
+            generuje przedmioty na planszy,
+            lista przedmiotów zawiera:
+                - dwa małe mikstury życia
+                - jedna średnia mikstura życia
+                - dwa różne miecze dodające statystyki do accuracy
+                - dwa różne topory dodające statystyki do attack
+                - dwa różne elementy zbroi dodające statystyki do defence
+                
+        5. gen_eq():
+            generuje pusty ekwipunek (obiekt klasy Equipment) z 8 slotami
+        
+        6. gen_worn_items():
+            generuje pustą tabelkę z informacjami o założonych przedmiotach
+            (obiekt klasy Worn_items) z 4 slotami
+            
+        7. gen_lanterns():
+            generuje latarnie o określonej wcześniej ilości w losowych miejscach
+            i zwraca listę ich pozycji z liście
+            
+        8. in_sight(pos):
+            sprawdza czy pozycja 'pos' jest w polu widzenia przez głównego bohatera
+            lub też przez którąś z latarni
+        
+        9. gen_board():
+            generuje labirynt pomocą zrandomizowanego algorytmu Prima,
+            labirynt generuje się na całej długości planszy 
+            (+- 2/3 kafelki na miejsce dla ekwipunków)
+            metoda ta zwraca listę pozycji które należą do wygenerowanego labiryntu
+            
+       10. draw_board():
+            metoda która rysuje cały labirynt oraz jego wszystkie obiekty
+            kluczowe w tej metodzie jest fakt, iż obiekty powinny być wyświetlane 
+            w ustalonej kolejności oraz sprawdzamy czy dany obiekt (lub jego fragment)
+            jest w polu widzenia korzystając przy tym z metody in_sight(pos), która
+            również znajduje się w klasie Labirynth
+      
+       11. check_and_make_move(g):
+            metoda która sprawdza czy główny bohater może posunąć się o wektor 'g'
+            jeżeli na polu na którym chcemy stanąć znajduje się potwór, wtedy możemy na 
+            nie stanąć wtedy i tylko wtedy gdy stała 'mob_blocks_human' jest równa True
+            jeżeli ruch jest poprawny przesuwamy bohatera w danym kierunku
+            
+       12. check_and_pick_item():
+            sprawdza czy bohater może podnieść przedmiot 
+            (czyli czy ma jeszcze miejsce w jego ekwipunku)
+            jeśli tak, przedmiot zostaje podniesiony i znika z planszy
+       
+       13. human_attack(pos):
+            bohater wykonuje atak na określoną pozycję,
+            potwór znajdujący się na pozycji 'pos' przyjmuje obrażenia,
+            bazując na jego obronie oraz ataku bohatera
+            
+       14. use_curr_item():
+            metoda ta symuluje użycie przedmiotu, który jest wskazany przez
+            wskaźnik ekwipunku, przedmiot następnie jest konsumowany lub też
+            przechodzi do założonych przedmiotów
+       
+       15. take_off():
+            metoda ta symuluje ściągnięcie przedmiotu który jest na bieżącej pozycji 
+            w przedmiotach noszonych przez bohatera. przedmiot jest ściągany z noszonych przedmiotów,
+            statystyki wracają do normy, a przedmiot trafia do ekwipunku.
+            UWAGA: jeżeli w ekwipunku nie ma miejsca, przedmiot nie zostanie ściągnięty
+            
+       16. make_action(keys):
+            pobiera listę wciśniętych klawiszy oraz na jej podstawie wykonuje odpowiednie czynności
+            
+       17. empty_room(pos):
+            predykat sprawdzający czy na dane pole jest wolne, ale należy do labiryntu
+            
+       18. mob_actions():
+            generuje zachowania wszystkich potworów stojących na planszy bazując na ich parametach
+            (kradzież, atak, ruch)
+       
+       19. update():
+            odświeża parametry planszy, następnie a następnie inicjalizuje metodę 'draw_board()'
+            
+       20. run():
+            główna metoda tej klasy, która wykonuje operacje w zależności od interakcji z użytkownikiem
+        
+Klasa Mobs:
+
+    Klasa ta przechowuje obiekty które zawierają informację o potworach
+    jedne z ważniejszych to:
+    
+    - maksymalny poziom życia
+    - aktualny poziom życia
+    - pozycja
+    - atak
+    - obrona
+    - skuteczność w ataku
+    - skuteczność w kradzieży
+    - wartość bool-owska mówiąca o tym czy stwór jeszcze żyje
+    
+    Metody tej klasy to:
+        1. mob_pos():
+            zwraca bieżącą pozycję potwora
+        
+        2. move(g):
+            przesuwa potwora o zadany wektor 'g'
+            
+        3. show_name():
+            pokazuje nazwę potwora
+        
+        4. show_hp():
+            pokazuje bieżący pasek życia
+            
+        5. update_texts(tick):
+            sprawdza które dodatkowe informacje, które są wyświetlane do potwora powinny zostać
+            zaktualizowane
+        
+        6. draw_mob():
+            rysuje potwora
+            
+        7. change_pos(pos):
+            zmienia pozycję danego potwora na 'pos'
+        
+        8. heal(amount):
+            zwiększa bieżący poziom zdrowia o 'amount'
+            generuje przy tym animację leczenia
+            
+        9. hurt(amount):
+            zmniejsza bieżący poziom zdrowia o 'amount'
+            generuje przy tym animacje ataku
+            jeżeli poziom zdrowia jest mniejszy od amount
+            ustawia 'Alive' na wartość False
+            
+Klasa Human:
+    
+    Klasa ta dziedziczy po klasie Mobs.
+    jest to klasa przechowująca informację oraz parametry o głównym bohaterze
+    
+    Klasa ta zawiera dwie metody:
+        1. show_hp():
+            jest to nadpisana metoda klasy 'Mobs',
+            zamiast pasku życia pokazują nam sie serduszka w prawym dolnym rogu
+        
+        2. show_parametrs():
+            pokazuje statystyki gracza w prawym dolnym rogu
+
+Klasa Item:
+    
+    Klasa przechowuje w sobie informacje o przedmiocie który przechowuje
+    - pozycja
+    - obrazek
+    - nazwa funkcji jakie wykonuje
+    - liste parametrów funkcji
+    
+    Jej metody to:
+        1.__copy__():
+            zwraca zduplikowany obiekt
+        
+        2. draw_item():
+            rysuje bieżący przedmiot
+        
+        3. item_pos():
+            zwraca pozycję danego przedmiotu
+        
+        4. change_pos(pos)
+            zmienia pozycję danego przedmiotu na 'pos'
+
+Klasa Equipment:
+    
+    Klasa ta przechowuje informację o plecaku,
+    w którym znajdują się przedmioty bohatera
+    zawiera w sobie maksymanlą ilość slotów oraz informacje o zajętych slotach
+    
+    Jej metody to:
+        1. set_item_pos(numb, item):
+            ustawia przedmiot 'item' w kolejności 'numb' w ekwipunku
+        
+        2. it_pos():
+            mówi na jakiej pozycji powinien być ustawiony wskaźnik ekwipunku
+        
+        3. show_eq():
+            poazuje plecak gracza
+            
+        4. add_item(item):
+            dodaj przedmiot 'item' do pierwszego wolnego miejsca
+            w ekwipunku jeśli ono istnieje
+        
+        5. delete_item_from_it(it):
+            usuwa 'it'-y przedmiot z ekwipunku
+            
+        6. delete_item():
+            usuwa przedmiot wskazany przez wskażnik ekwipunku
+        
+        7. curr_item():
+            zwraca przedmiot, który jest wskazany przez wskażnik ekwipunku
+        
+        8. it_on_item():
+            predykat mówiący czy wskaźnik ekwipunku wskazuje na przedmiot
+            czy też na puste pole
+            
+        9. inc_it():
+            przesuwa wskaźnik ekwipunku do przodu 
+            (jeżeli jest taka możliwość
+        
+       10. dec_it():
+            przesuwa wskaźnik ekwipunku do tyłu
+            (jeżeli jest taka możliwośc)
+       
+Klasa Worn_items:
+    
+    Klasa ta dziedziczy od klasy Equipment,
+    opisuje ona przedmiota założone przez bohatera
+    
+    W klasie tej zostały nadpisane metody takie jak:
+    - set_item_pos()
+    - it_pos()
+    
+    z racji na fakt, że drugi ekwipunek chcemy mieć w innym miejscu
+            
+    
+        
+        
+        
